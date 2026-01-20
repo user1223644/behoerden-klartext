@@ -1,0 +1,10 @@
+Stadt Musterstadt
+Amt für Bürgerdienste
+
+Sehr geehrte/r Herr/Frau Mustermann,
+
+wir möchten Sie darüber informieren, dass Ihre Adressänderung erfolgreich in unserem System eingetragen wurde.
+Sie müssen keine weiteren Schritte unternehmen.
+
+Mit freundlichen Grüßen,
+Amt für Bürgerdienste

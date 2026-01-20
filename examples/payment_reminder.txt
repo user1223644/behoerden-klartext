@@ -1,0 +1,11 @@
+Musterfirma GmbH
+Zahlungserinnerung
+
+Sehr geehrte/r Herr/Frau Mustermann,
+
+wir möchten Sie freundlich daran erinnern, dass die Rechnung Nr. 12345 über 120,00 € am 15.01.2026 fällig war. 
+Bitte begleichen Sie den offenen Betrag innerhalb der nächsten 14 Tage, um zusätzliche Mahngebühren zu vermeiden.
+
+Mit freundlichen Grüßen,
+Musterfirma GmbH
+Buchhaltung
