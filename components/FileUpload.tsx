@@ -115,61 +115,61 @@ export function FileUpload({
         className={`
           relative
           border-2 border-dashed rounded-xl
-          p-8
+          p-10
           text-center
           cursor-pointer
           transition-all duration-300
           ${
             isDragging
-              ? "border-blue-500 bg-blue-500/10"
-              : "border-gray-600 hover:border-gray-500 bg-gray-800/50"
+              ? "border-primary-orange bg-primary-orange/5"
+            : "border-border-color hover:border-primary-orange/30 bg-bg-secondary"
           }
           ${disabled ? "opacity-50 cursor-not-allowed" : ""}
         `}
       >
         {preview ? (
-          <div className="relative">
+          <div className="relative group">
             <img
               src={preview}
               alt="Vorschau"
-              className="max-h-64 mx-auto rounded-lg shadow-lg"
+              className="max-h-64 mx-auto rounded-lg shadow-xl"
             />
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 clearPreview();
               }}
-              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center"
+              className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
             >
               ✕
             </button>
           </div>
         ) : isPDFFile && fileName ? (
           <div className="relative">
-            <div className="flex flex-col items-center gap-3 p-6 bg-gray-700/50 rounded-lg">
-              <span className="text-6xl">📑</span>
-              <p className="text-lg font-medium text-white">{fileName}</p>
-              <p className="text-sm text-gray-400">PDF-Datei ausgewählt</p>
+            <div className="flex flex-col items-center gap-4 p-8 bg-bg-primary/50 rounded-lg border border-border-color">
+              <span className="text-6xl filter drop-shadow-md">📑</span>
+              <p className="text-lg font-bold text-text-primary mb-1">{fileName}</p>
+              <p className="text-sm font-medium text-text-secondary uppercase tracking-wider">PDF-Datei ausgewählt</p>
             </div>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 clearPreview();
               }}
-              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center"
+              className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
             >
               ✕
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="text-6xl">📄</div>
+          <div className="space-y-6">
+            <div className="text-6xl transition-transform duration-300 group-hover:scale-110">📄</div>
             <div>
-              <p className="text-lg font-medium text-gray-200">
+              <p className="text-xl font-bold text-text-primary">
                 Datei hier ablegen oder klicken
               </p>
-              <p className="text-sm text-gray-400 mt-2">
-                Unterstützt: JPG, PNG, WEBP, <strong>PDF</strong>
+              <p className="text-sm text-text-secondary mt-3">
+                Unterstützt: JPG, PNG, WEBP, PDF
               </p>
             </div>
           </div>

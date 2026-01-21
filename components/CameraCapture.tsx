@@ -24,11 +24,11 @@ export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProp
 
   if (state.error) {
     return (
-      <div className="p-4 bg-red-500/20 border border-red-500 rounded-xl text-center">
-        <p className="text-red-400">{state.error}</p>
+      <div className="p-6 bg-red-500/10 border border-red-500/50 rounded-xl text-center shadow-inner">
+        <p className="text-red-600 dark:text-red-400 font-medium">{state.error}</p>
         <button
           onClick={startCamera}
-          className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg"
+          className="mt-4 px-6 py-2 bg-primary-orange hover:bg-primary-orange-light text-white rounded-lg transition-colors font-medium shadow-md"
         >
           Erneut versuchen
         </button>
@@ -42,13 +42,14 @@ export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProp
         onClick={startCamera}
         disabled={disabled}
         className={`
-          w-full py-4 px-6
-          bg-gradient-to-r from-blue-600 to-purple-600
-          hover:from-blue-500 hover:to-purple-500
+          w-full py-5 px-6
+          bg-gradient-to-r from-primary-orange to-primary-orange-light
+          hover:from-primary-orange-light hover:to-primary-orange
           rounded-xl
-          font-medium text-lg
+          font-bold text-lg text-white
           transition-all duration-300
           flex items-center justify-center gap-3
+          shadow-lg active:scale-[0.98]
           ${disabled ? "opacity-50 cursor-not-allowed" : ""}
         `}
       >
@@ -59,7 +60,7 @@ export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProp
   }
 
   return (
-    <div className="relative rounded-xl overflow-hidden border border-gray-700">
+    <div className="relative rounded-xl overflow-hidden border border-border-color shadow-2xl">
       {/* Video preview */}
       <video
         ref={videoRef}
@@ -70,20 +71,22 @@ export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProp
       />
 
       {/* Controls overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-        <div className="flex justify-center gap-4">
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 to-transparent">
+        <div className="flex justify-center items-center gap-8">
           {/* Capture button */}
           <button
             onClick={handleCapture}
-            className="w-16 h-16 bg-white rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors shadow-lg"
+            className="w-20 h-20 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] active:scale-90"
+            aria-label="Foto aufnehmen"
           >
-            <div className="w-12 h-12 bg-red-500 rounded-full" />
+            <div className="w-16 h-16 border-4 border-black/5 rounded-full bg-primary-orange shadow-inner" />
           </button>
 
           {/* Close button */}
           <button
             onClick={stopCamera}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-gray-800/80 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
+            className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-colors backdrop-blur-sm"
+            aria-label="Kamera schließen"
           >
             ✕
           </button>

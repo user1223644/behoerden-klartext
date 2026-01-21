@@ -95,11 +95,11 @@ export default function Home() {
 
   // Main input UI
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto px-4 py-8 max-w-2xl bg-bg-primary text-text-primary transition-colors duration-300">
       <Header />
 
       {/* Input mode tabs */}
-      <div className="flex gap-2 mb-6 bg-gray-800/50 rounded-xl p-1">
+      <div className="flex gap-2 mb-6 bg-bg-secondary border border-border-color rounded-xl p-1">
         <TabButton
           active={inputMode === "upload"}
           onClick={() => setInputMode("upload")}
@@ -121,7 +121,7 @@ export default function Home() {
       </div>
 
       {/* Input area */}
-      <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-700">
+      <div className="bg-bg-secondary rounded-2xl p-6 border border-border-color shadow-sm">
         {inputMode === "upload" && (
           <FileUpload onFileSelect={handleFileAnalysis} />
         )}
@@ -136,12 +136,12 @@ export default function Home() {
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
               placeholder="Fügen Sie hier den Text des Briefes ein..."
-              className="w-full h-64 bg-gray-800 border border-gray-600 rounded-xl p-4 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+              className="w-full h-64 bg-bg-primary border border-border-color rounded-xl p-4 text-text-primary placeholder-text-secondary/50 focus:border-primary-orange focus:ring-1 focus:ring-primary-orange resize-none transition-all"
             />
             <button
               onClick={handleTextAnalysis}
               disabled={!textInput.trim()}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition-all"
+              className="w-full py-3 bg-gradient-to-r from-primary-orange to-primary-orange-light hover:from-primary-orange-light hover:to-primary-orange disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium text-white transition-all shadow-md active:scale-[0.98]"
             >
               Analysieren
             </button>
@@ -151,7 +151,7 @@ export default function Home() {
 
       {/* Error display */}
       {processingError && (
-        <div className="mt-4 p-4 bg-red-500/20 border border-red-500 rounded-xl text-red-400">
+        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-600 dark:text-red-400">
           {processingError}
         </div>
       )}
@@ -182,11 +182,11 @@ export default function Home() {
 
 function Header() {
   return (
-    <div className="text-center mb-8">
-      <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+    <div className="text-center mb-12">
+      <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary-orange to-primary-orange-light bg-clip-text text-transparent mb-3">
         Behörden-Klartext
       </h1>
-      <p className="text-gray-400">
+      <p className="text-text-secondary text-lg">
         Verstehen Sie amtliche Schreiben in Sekunden
       </p>
     </div>
@@ -206,15 +206,15 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
       onClick={onClick}
       className={`
         flex-1 py-2 px-3 rounded-lg font-medium text-sm
-        transition-all duration-200
+        transition-all duration-300
         ${
           active
-            ? "bg-gray-700 text-white"
-            : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+            ? "bg-bg-primary text-primary-orange shadow-sm border border-border-color"
+            : "text-text-secondary hover:text-text-primary hover:bg-bg-primary/50"
         }
       `}
     >
-      <span className="mr-1">{icon}</span>
+      <span className="mr-2">{icon}</span>
       <span className="hidden sm:inline">{label}</span>
     </button>
   );
@@ -228,18 +228,18 @@ interface FeatureCardProps {
 
 function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
-    <div className="p-4 bg-gray-800/30 rounded-xl text-center">
-      <div className="text-3xl mb-2">{icon}</div>
-      <h3 className="font-medium text-white">{title}</h3>
-      <p className="text-sm text-gray-400">{description}</p>
+    <div className="p-6 bg-bg-secondary rounded-xl text-center border border-border-color hover:border-primary-orange/30 transition-colors shadow-sm">
+      <div className="text-4xl mb-4">{icon}</div>
+      <h3 className="font-bold text-text-primary mb-2">{title}</h3>
+      <p className="text-sm text-text-secondary">{description}</p>
     </div>
   );
 }
 
 function Footer() {
   return (
-    <footer className="mt-12 text-center text-sm text-gray-500">
-      <p>
+    <footer className="mt-16 text-center text-sm text-text-secondary border-t border-border-color pt-8">
+      <p className="max-w-md mx-auto">
         Keine Rechtsberatung. Bei wichtigen Entscheidungen konsultieren Sie einen
         Rechtsanwalt.
       </p>

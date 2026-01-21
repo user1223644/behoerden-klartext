@@ -28,6 +28,12 @@ export const RED_KEYWORDS: KeywordDefinition[] = [
   { keyword: "lohnpfändung", category: "enforcement", urgency: "red", weight: 90 },
   { keyword: "räumungsklage", category: "enforcement", urgency: "red", weight: 95 },
   { keyword: "zwangsräumung", category: "enforcement", urgency: "red", weight: 100 },
+  { keyword: "zwangsvollstreckungsbescheid", category: "enforcement", urgency: "red", weight: 100 },
+  { keyword: "pfändungsankündigung", category: "enforcement", urgency: "red", weight: 90 },
+  { keyword: "gerichtlicher titel", category: "enforcement", urgency: "red", weight: 95 },
+  { keyword: "vollstreckungsauftrag", category: "enforcement", urgency: "red", weight: 90 },
+  { keyword: "zwangsvollstreckungsmaßnahmen", category: "enforcement", urgency: "red", weight: 100 },
+  { keyword: "eidesstattliche erklärung", category: "enforcement", urgency: "red", weight: 85 },
 ];
 
 /**

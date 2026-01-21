@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,6 +10,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        "primary-orange": {
+          DEFAULT: "var(--orange)",
+          light: "var(--orange-light)",
+          dark: "var(--orange-dark)",
+        },
+        "bg-primary": "var(--bg-primary)",
+        "bg-secondary": "var(--bg-secondary)",
+        "text-primary": "var(--text-primary)",
+        "text-secondary": "var(--text-secondary)",
+        "border-color": "var(--border-color)",
         "traffic-green": "#22c55e",
         "traffic-yellow": "#eab308",
         "traffic-red": "#ef4444",

@@ -11,32 +11,37 @@ interface LoadingSpinnerProps {
 
 export function LoadingSpinner({ progress, status }: LoadingSpinnerProps) {
   return (
-    <div className="flex flex-col items-center justify-center p-8 space-y-6">
+    <div className="flex flex-col items-center justify-center p-8 space-y-8">
       {/* Spinner */}
-      <div className="relative">
-        <div className="w-20 h-20 border-4 border-gray-700 rounded-full" />
+      <div className="relative group">
+        <div className="w-24 h-24 border-4 border-border-color rounded-full" />
         <div
-          className="absolute top-0 left-0 w-20 h-20 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"
+          className="absolute top-0 left-0 w-24 h-24 border-4 border-primary-orange rounded-full border-t-transparent animate-spin shadow-[0_0_15px_rgba(255,165,0,0.3)]"
         />
 
         {/* Progress in center */}
         {progress !== undefined && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-lg font-bold text-white">{progress}%</span>
+            <span className="text-xl font-black text-text-primary tracking-tighter">
+              {progress}<span className="text-primary-orange text-sm ml-0.5">%</span>
+            </span>
           </div>
         )}
       </div>
 
       {/* Status text */}
       {status && (
-        <p className="text-gray-300 text-center animate-pulse">{status}</p>
+        <div className="text-center space-y-2">
+           <p className="text-text-primary font-bold text-lg animate-pulse tracking-wide uppercase">{status}</p>
+           <p className="text-text-secondary text-sm">Bitte haben Sie einen Moment Geduld...</p>
+        </div>
       )}
 
       {/* Progress bar */}
       {progress !== undefined && (
-        <div className="w-full max-w-xs h-2 bg-gray-700 rounded-full overflow-hidden">
+        <div className="w-full max-w-xs h-3 bg-bg-secondary rounded-full overflow-hidden border border-border-color p-0.5">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-primary-orange to-primary-orange-light rounded-full transition-all duration-500 ease-out shadow-sm"
             style={{ width: `${progress}%` }}
           />
         </div>
