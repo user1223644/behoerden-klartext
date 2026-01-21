@@ -14,6 +14,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { AnalysisResultDisplay } from "@/components/AnalysisResult";
 import { AnalysisResult } from "@/types";
 import { isPDF } from "@/lib/pdf/extractor";
+import { validateLetter } from "@/lib/validation";
 
 type InputMode = "upload" | "camera" | "text";
 
@@ -21,6 +22,7 @@ export default function Home() {
   const [inputMode, setInputMode] = useState<InputMode>("upload");
   const [textInput, setTextInput] = useState("");
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { state: ocrState, processImage, reset: resetOCR } = useOCR();
   const { state: pdfState, extractText: extractPDFText, reset: resetPDF } = usePDF();
@@ -34,6 +36,7 @@ export default function Home() {
 
   const handleFileAnalysis = useCallback(
     async (file: File | Blob) => {
+      setValidationError(null);
       try {
         let text: string;
 
@@ -48,7 +51,13 @@ export default function Home() {
           text = await processImage(file);
         }
 
-        const result = analyze(text);
+        const validation = validateLetter(text);
+        if (!validation.isValidLetter) {
+          setValidationError(validation.message || "Validierung fehlgeschlagen");
+          return;
+        }
+
+        const result = analyze(validation.text);
         setAnalysisResult(result);
       } catch (error) {
         console.error("Analysis failed:", error);
@@ -58,13 +67,22 @@ export default function Home() {
   );
 
   const handleTextAnalysis = useCallback(() => {
+    setValidationError(null);
     if (!textInput.trim()) return;
-    const result = analyze(textInput);
+
+    const validation = validateLetter(textInput);
+    if (!validation.isValidLetter) {
+      setValidationError(validation.message || "Validierung fehlgeschlagen");
+      return;
+    }
+
+    const result = analyze(validation.text);
     setAnalysisResult(result);
   }, [textInput, analyze]);
 
   const handleReset = useCallback(() => {
     setAnalysisResult(null);
+    setValidationError(null);
     setTextInput("");
     resetOCR();
     resetPDF();
@@ -102,26 +120,35 @@ export default function Home() {
       <div className="flex gap-2 mb-6 bg-bg-secondary border border-border-color rounded-xl p-1">
         <TabButton
           active={inputMode === "upload"}
-          onClick={() => setInputMode("upload")}
+          onClick={() => {
+            setInputMode("upload");
+            setValidationError(null);
+          }}
           icon="📄"
           label="Datei hochladen"
         />
         <TabButton
           active={inputMode === "camera"}
-          onClick={() => setInputMode("camera")}
+          onClick={() => {
+            setInputMode("camera");
+            setValidationError(null);
+          }}
           icon="📷"
           label="Foto aufnehmen"
         />
         <TabButton
           active={inputMode === "text"}
-          onClick={() => setInputMode("text")}
+          onClick={() => {
+            setInputMode("text");
+            setValidationError(null);
+          }}
           icon="✏️"
           label="Text eingeben"
         />
       </div>
 
       {/* Input area */}
-      <div className="bg-bg-secondary rounded-2xl p-6 border border-border-color shadow-sm">
+      <div className={`bg-bg-secondary rounded-2xl p-6 border shadow-sm transition-colors ${validationError ? 'border-red-500/50' : 'border-border-color'}`}>
         {inputMode === "upload" && (
           <FileUpload onFileSelect={handleFileAnalysis} />
         )}
@@ -134,9 +161,12 @@ export default function Home() {
           <div className="space-y-4">
             <textarea
               value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
+              onChange={(e) => {
+                setTextInput(e.target.value);
+                if (validationError) setValidationError(null);
+              }}
               placeholder="Fügen Sie hier den Text des Briefes ein..."
-              className="w-full h-64 bg-bg-primary border border-border-color rounded-xl p-4 text-text-primary placeholder-text-secondary/50 focus:border-primary-orange focus:ring-1 focus:ring-primary-orange resize-none transition-all"
+              className={`w-full h-64 bg-bg-primary border rounded-xl p-4 text-text-primary placeholder-text-secondary/50 focus:ring-1 resize-none transition-all ${validationError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border-color focus:border-primary-orange focus:ring-primary-orange'}`}
             />
             <button
               onClick={handleTextAnalysis}
@@ -150,9 +180,10 @@ export default function Home() {
       </div>
 
       {/* Error display */}
-      {processingError && (
-        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-600 dark:text-red-400">
-          {processingError}
+      {(processingError || validationError) && (
+        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-2">
+          <span className="text-xl">⚠️</span>
+          <span className="font-medium">{processingError || validationError}</span>
         </div>
       )}
 
