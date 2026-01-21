@@ -7,6 +7,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { isPDF } from "@/lib/pdf/extractor";
+import { Upload, FileText, X } from "@/components/icons";
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -140,14 +141,17 @@ export function FileUpload({
                 clearPreview();
               }}
               className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
+              aria-label="Vorschau löschen"
             >
-              ✕
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         ) : isPDFFile && fileName ? (
           <div className="relative">
             <div className="flex flex-col items-center gap-4 p-8 bg-bg-primary/50 rounded-lg border border-border-color">
-              <span className="text-6xl filter drop-shadow-md">📑</span>
+              <span className="w-16 h-16 rounded-full bg-primary-orange/10 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-primary-orange" aria-hidden="true" />
+              </span>
               <p className="text-lg font-bold text-text-primary mb-1">{fileName}</p>
               <p className="text-sm font-medium text-text-secondary uppercase tracking-wider">PDF-Datei ausgewählt</p>
             </div>
@@ -157,13 +161,18 @@ export function FileUpload({
                 clearPreview();
               }}
               className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
+              aria-label="Auswahl löschen"
             >
-              ✕
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="text-6xl transition-transform duration-300 group-hover:scale-110">📄</div>
+            <div className="flex justify-center">
+              <span className="w-16 h-16 rounded-full bg-primary-orange/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <Upload className="w-8 h-8 text-primary-orange" aria-hidden="true" />
+              </span>
+            </div>
             <div>
               <p className="text-xl font-bold text-text-primary">
                 Datei hier ablegen oder klicken

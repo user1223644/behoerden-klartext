@@ -5,6 +5,8 @@
  */
 
 import { ExtractedData } from "@/types";
+import { ReactNode } from "react";
+import { Coins, Calendar, Clock, FileText, Building2 } from "@/components/icons";
 
 interface ExtractedDataDisplayProps {
   data: ExtractedData;
@@ -20,7 +22,7 @@ export function ExtractedDataDisplay({ data }: ExtractedDataDisplayProps) {
 
   if (!hasData) {
     return (
-      <div className="p-4 bg-gray-800/50 rounded-xl text-center text-gray-400">
+      <div className="p-4 bg-bg-secondary rounded-xl text-center text-text-secondary border border-border-color">
         Keine spezifischen Daten extrahiert.
       </div>
     );
@@ -28,13 +30,13 @@ export function ExtractedDataDisplay({ data }: ExtractedDataDisplayProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-white">Extrahierte Daten</h3>
+      <h3 className="text-lg font-semibold text-text-primary">Extrahierte Daten</h3>
 
       <div className="grid gap-3 md:grid-cols-2">
         {/* Amounts */}
         {data.amounts.length > 0 && (
           <DataCard
-            icon="💰"
+            icon={<Coins className="w-5 h-5 text-primary-orange" aria-hidden="true" />}
             label="Beträge"
             items={data.amounts.map((a) => a.formatted)}
           />
@@ -42,13 +44,17 @@ export function ExtractedDataDisplay({ data }: ExtractedDataDisplayProps) {
 
         {/* Dates */}
         {data.dates.length > 0 && (
-          <DataCard icon="📅" label="Daten" items={data.dates} />
+          <DataCard 
+            icon={<Calendar className="w-5 h-5 text-primary-orange" aria-hidden="true" />} 
+            label="Daten" 
+            items={data.dates} 
+          />
         )}
 
         {/* Deadline */}
         {data.deadlineDays !== undefined && (
           <DataCard
-            icon="⏰"
+            icon={<Clock className="w-5 h-5 text-yellow-500" aria-hidden="true" />}
             label="Frist"
             items={[`${data.deadlineDays} Tage`]}
             highlight
@@ -57,12 +63,20 @@ export function ExtractedDataDisplay({ data }: ExtractedDataDisplayProps) {
 
         {/* References */}
         {data.references.length > 0 && (
-          <DataCard icon="📋" label="Aktenzeichen" items={data.references} />
+          <DataCard 
+            icon={<FileText className="w-5 h-5 text-primary-orange" aria-hidden="true" />} 
+            label="Aktenzeichen" 
+            items={data.references} 
+          />
         )}
 
         {/* IBANs */}
         {data.ibans.length > 0 && (
-          <DataCard icon="🏦" label="IBAN" items={data.ibans} />
+          <DataCard 
+            icon={<Building2 className="w-5 h-5 text-primary-orange" aria-hidden="true" />} 
+            label="IBAN" 
+            items={data.ibans} 
+          />
         )}
       </div>
     </div>
@@ -70,7 +84,7 @@ export function ExtractedDataDisplay({ data }: ExtractedDataDisplayProps) {
 }
 
 interface DataCardProps {
-  icon: string;
+  icon: ReactNode;
   label: string;
   items: string[];
   highlight?: boolean;
@@ -80,19 +94,21 @@ function DataCard({ icon, label, items, highlight = false }: DataCardProps) {
   return (
     <div
       className={`
-        p-4 rounded-xl
-        ${highlight ? "bg-yellow-500/20 border border-yellow-500/50" : "bg-gray-800/50"}
+        p-4 rounded-xl border
+        ${highlight 
+          ? "bg-yellow-500/10 border-yellow-500/50" 
+          : "bg-bg-secondary border-border-color"}
       `}
     >
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl">{icon}</span>
-        <span className="text-sm font-medium text-gray-400">{label}</span>
+        {icon}
+        <span className="text-sm font-medium text-text-secondary">{label}</span>
       </div>
       <div className="space-y-1">
         {items.map((item, i) => (
           <p
             key={i}
-            className={`font-mono ${highlight ? "text-yellow-300" : "text-white"}`}
+            className={`font-mono ${highlight ? "text-yellow-500" : "text-text-primary"}`}
           >
             {item}
           </p>
