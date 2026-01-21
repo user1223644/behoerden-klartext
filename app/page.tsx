@@ -6,12 +6,14 @@
 
 import { useState, useCallback } from "react";
 import { useOCR } from "@/hooks/useOCR";
+import { usePDF } from "@/hooks/usePDF";
 import { useScoring } from "@/hooks/useScoring";
 import { FileUpload } from "@/components/FileUpload";
 import { CameraCapture } from "@/components/CameraCapture";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { AnalysisResultDisplay } from "@/components/AnalysisResult";
 import { AnalysisResult } from "@/types";
+import { isPDF } from "@/lib/pdf/extractor";
 
 type InputMode = "upload" | "camera" | "text";
 
@@ -21,19 +23,38 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
 
   const { state: ocrState, processImage, reset: resetOCR } = useOCR();
+  const { state: pdfState, extractText: extractPDFText, reset: resetPDF } = usePDF();
   const { analyze, reset: resetScoring } = useScoring();
 
-  const handleImageAnalysis = useCallback(
-    async (image: File | Blob) => {
+  // Determine if we're processing (OCR or PDF)
+  const isProcessing = ocrState.isProcessing || pdfState.isProcessing;
+  const processingProgress = ocrState.isProcessing ? ocrState.progress : pdfState.progress;
+  const processingStatus = ocrState.isProcessing ? ocrState.status : pdfState.status;
+  const processingError = ocrState.error || pdfState.error;
+
+  const handleFileAnalysis = useCallback(
+    async (file: File | Blob) => {
       try {
-        const text = await processImage(image);
+        let text: string;
+
+        // Check if it's a PDF (only Files can be PDFs, not Blobs from camera)
+        const isFilePDF = file instanceof File && isPDF(file);
+
+        if (isFilePDF) {
+          // Use PDF extractor for PDFs
+          text = await extractPDFText(file);
+        } else {
+          // Use OCR for images (including camera captures)
+          text = await processImage(file);
+        }
+
         const result = analyze(text);
         setAnalysisResult(result);
       } catch (error) {
         console.error("Analysis failed:", error);
       }
     },
-    [processImage, analyze]
+    [extractPDFText, processImage, analyze]
   );
 
   const handleTextAnalysis = useCallback(() => {
@@ -46,8 +67,9 @@ export default function Home() {
     setAnalysisResult(null);
     setTextInput("");
     resetOCR();
+    resetPDF();
     resetScoring();
-  }, [resetOCR, resetScoring]);
+  }, [resetOCR, resetPDF, resetScoring]);
 
   // Show results if analysis is complete
   if (analysisResult) {
@@ -59,13 +81,13 @@ export default function Home() {
     );
   }
 
-  // Show loading during OCR
-  if (ocrState.isProcessing) {
+  // Show loading during OCR or PDF processing
+  if (isProcessing) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <Header />
         <div className="mt-12">
-          <LoadingSpinner progress={ocrState.progress} status={ocrState.status} />
+          <LoadingSpinner progress={processingProgress} status={processingStatus} />
         </div>
       </div>
     );
@@ -101,11 +123,11 @@ export default function Home() {
       {/* Input area */}
       <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-700">
         {inputMode === "upload" && (
-          <FileUpload onFileSelect={handleImageAnalysis} />
+          <FileUpload onFileSelect={handleFileAnalysis} />
         )}
 
         {inputMode === "camera" && (
-          <CameraCapture onCapture={handleImageAnalysis} />
+          <CameraCapture onCapture={handleFileAnalysis} />
         )}
 
         {inputMode === "text" && (
@@ -127,10 +149,10 @@ export default function Home() {
         )}
       </div>
 
-      {/* OCR Error display */}
-      {ocrState.error && (
+      {/* Error display */}
+      {processingError && (
         <div className="mt-4 p-4 bg-red-500/20 border border-red-500 rounded-xl text-red-400">
-          {ocrState.error}
+          {processingError}
         </div>
       )}
 

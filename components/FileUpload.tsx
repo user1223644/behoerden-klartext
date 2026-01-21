@@ -2,9 +2,11 @@
 
 /**
  * File upload component with drag-and-drop and preview.
+ * Supports images and PDFs.
  */
 
 import { useState, useCallback, useRef } from "react";
+import { isPDF } from "@/lib/pdf/extractor";
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -14,26 +16,39 @@ interface FileUploadProps {
 
 export function FileUpload({
   onFileSelect,
-  accept = "image/*",
+  accept = "image/*,application/pdf",
   disabled = false,
 }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [isPDFFile, setIsPDFFile] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
     (file: File) => {
-      if (!file.type.startsWith("image/")) {
-        alert("Bitte nur Bilddateien hochladen.");
+      const isImage = file.type.startsWith("image/");
+      const isPdf = isPDF(file);
+
+      if (!isImage && !isPdf) {
+        alert("Bitte nur Bilder oder PDF-Dateien hochladen.");
         return;
       }
 
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      setFileName(file.name);
+      setIsPDFFile(isPdf);
+
+      if (isImage) {
+        // Create image preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setPreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // No preview for PDFs, just show file name
+        setPreview(null);
+      }
 
       onFileSelect(file);
     },
@@ -82,6 +97,8 @@ export function FileUpload({
 
   const clearPreview = useCallback(() => {
     setPreview(null);
+    setFileName(null);
+    setIsPDFFile(false);
     if (inputRef.current) {
       inputRef.current.value = "";
     }
@@ -127,15 +144,32 @@ export function FileUpload({
               ✕
             </button>
           </div>
+        ) : isPDFFile && fileName ? (
+          <div className="relative">
+            <div className="flex flex-col items-center gap-3 p-6 bg-gray-700/50 rounded-lg">
+              <span className="text-6xl">📑</span>
+              <p className="text-lg font-medium text-white">{fileName}</p>
+              <p className="text-sm text-gray-400">PDF-Datei ausgewählt</p>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                clearPreview();
+              }}
+              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center"
+            >
+              ✕
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
             <div className="text-6xl">📄</div>
             <div>
               <p className="text-lg font-medium text-gray-200">
-                Bild hier ablegen oder klicken
+                Datei hier ablegen oder klicken
               </p>
               <p className="text-sm text-gray-400 mt-2">
-                Unterstützt: JPG, PNG, WEBP, PDF
+                Unterstützt: JPG, PNG, WEBP, <strong>PDF</strong>
               </p>
             </div>
           </div>
@@ -153,3 +187,4 @@ export function FileUpload({
     </div>
   );
 }
+
