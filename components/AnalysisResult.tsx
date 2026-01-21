@@ -7,6 +7,15 @@
 import { AnalysisResult } from "@/types";
 import { TrafficLight } from "./TrafficLight";
 import { ExtractedDataDisplay } from "./ExtractedData";
+import { 
+  FileText, 
+  ListChecks, 
+  ArrowRight, 
+  Search, 
+  ChevronDown, 
+  RefreshCw, 
+  Lock 
+} from "@/components/icons";
 
 interface AnalysisResultDisplayProps {
   result: AnalysisResult;
@@ -40,8 +49,11 @@ export function AnalysisResultDisplay({
 
       {/* Summary */}
       <div className="bg-bg-secondary rounded-2xl p-8 border border-border-color shadow-sm transition-all hover:border-primary-orange/30">
-        <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
-          <span className="text-primary-orange">✨</span> Zusammenfassung
+        <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-3">
+          <span className="w-8 h-8 rounded-full bg-primary-orange/10 flex items-center justify-center">
+            <FileText className="w-4 h-4 text-primary-orange" aria-hidden="true" />
+          </span>
+          Zusammenfassung
         </h3>
         <p className="text-text-secondary leading-relaxed text-lg italic">{scoring.summary}</p>
       </div>
@@ -52,13 +64,16 @@ export function AnalysisResultDisplay({
       {/* Recommendations */}
       {scoring.recommendations.length > 0 && (
         <div className="bg-bg-secondary rounded-2xl p-8 border border-border-color shadow-sm transition-all hover:border-primary-orange/30">
-          <h3 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
-            <span className="text-primary-orange">🎯</span> Empfohlene Maßnahmen
+          <h3 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-3">
+            <span className="w-8 h-8 rounded-full bg-primary-orange/10 flex items-center justify-center">
+              <ListChecks className="w-4 h-4 text-primary-orange" aria-hidden="true" />
+            </span>
+            Empfohlene Maßnahmen
           </h3>
           <ul className="space-y-4">
             {scoring.recommendations.map((rec, i) => (
               <li key={i} className="flex gap-4 items-start group">
-                <span className="text-primary-orange mt-1 group-hover:translate-x-1 transition-transform">→</span>
+                <ArrowRight className="w-4 h-4 text-primary-orange mt-1 group-hover:translate-x-1 transition-transform flex-shrink-0" aria-hidden="true" />
                 <span className="text-text-secondary leading-snug">{rec}</span>
               </li>
             ))}
@@ -70,10 +85,13 @@ export function AnalysisResultDisplay({
       {scoring.matches.length > 0 && (
         <details className="bg-bg-secondary rounded-2xl border border-border-color overflow-hidden group shadow-sm">
           <summary className="p-5 cursor-pointer hover:bg-bg-primary/50 transition-colors flex items-center justify-between">
-            <span className="font-bold text-text-primary flex items-center gap-2">
-              <span className="text-primary-orange">🔎</span> Erkannte Schlüsselwörter ({scoring.matches.length})
+            <span className="font-bold text-text-primary flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-primary-orange/10 flex items-center justify-center">
+                <Search className="w-4 h-4 text-primary-orange" aria-hidden="true" />
+              </span>
+              Erkannte Schlüsselwörter ({scoring.matches.length})
             </span>
-            <span className="text-text-secondary group-open:rotate-180 transition-transform">▼</span>
+            <ChevronDown className="w-5 h-5 text-text-secondary group-open:rotate-180 transition-transform" aria-hidden="true" />
           </summary>
           <div className="p-5 pt-0 grid gap-3">
             {scoring.matches.map((match, i) => (
@@ -82,7 +100,7 @@ export function AnalysisResultDisplay({
                 className="p-4 bg-bg-primary rounded-xl border border-border-color group/match"
               >
                 <div className="flex items-center gap-3 mb-1">
-                  <span key={i} className="px-3 py-1 bg-primary-orange/10 text-primary-orange text-sm rounded-full border border-border-color">{match.keyword}</span>
+                  <span className="px-3 py-1 bg-primary-orange/10 text-primary-orange text-sm rounded-full border border-border-color">{match.keyword}</span>
                   <span className="text-text-secondary/30">|</span>
                   <span className="text-xs text-text-secondary/50 font-medium">GEWICHT: {match.weight}</span>
                 </div>
@@ -99,12 +117,14 @@ export function AnalysisResultDisplay({
           onClick={onReset}
           className="px-10 py-4 bg-gradient-to-r from-primary-orange to-primary-orange-light hover:from-primary-orange-light hover:to-primary-orange text-white rounded-2xl font-bold text-lg transition-all shadow-xl hover:shadow-primary-orange/20 active:scale-95 flex items-center gap-3"
         >
-          <span>↺</span> Neuen Brief analysieren
+          <RefreshCw className="w-5 h-5" aria-hidden="true" />
+          Neuen Brief analysieren
         </button>
         
         {/* Privacy note */}
         <p className="flex items-center gap-2 text-text-secondary/60 text-xs font-medium uppercase tracking-widest bg-bg-secondary px-4 py-2 rounded-full">
-          <span className="text-primary-orange text-sm">🔒</span> 100% lokal & privat
+          <Lock className="w-4 h-4 text-primary-orange" aria-hidden="true" />
+          100% lokal & privat
         </p>
       </div>
     </div>

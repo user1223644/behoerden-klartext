@@ -6,6 +6,7 @@
 
 import { UrgencyLevel } from "@/types";
 import { URGENCY_DESCRIPTIONS } from "@/lib/scoring/keywords";
+import { AlertCircle, AlertTriangle, CheckCircle } from "@/components/icons";
 
 interface TrafficLightProps {
   level: UrgencyLevel;
@@ -20,10 +21,10 @@ const SIZE_CLASSES = {
   lg: "w-24 h-24",
 };
 
-const EMOJI_MAP: Record<UrgencyLevel, string> = {
-  green: "🟢",
-  yellow: "🟡",
-  red: "🔴",
+const ICON_SIZE_CLASSES = {
+  sm: "w-4 h-4",
+  md: "w-8 h-8",
+  lg: "w-12 h-12",
 };
 
 const COLOR_CLASSES: Record<UrgencyLevel, string> = {
@@ -44,6 +45,19 @@ const LABEL_MAP: Record<UrgencyLevel, string> = {
   red: "Rot",
 };
 
+function UrgencyIcon({ level, size }: { level: UrgencyLevel; size: "sm" | "md" | "lg" }) {
+  const iconClass = `${ICON_SIZE_CLASSES[size]} text-white`;
+  
+  switch (level) {
+    case "red":
+      return <AlertCircle className={iconClass} aria-hidden="true" />;
+    case "yellow":
+      return <AlertTriangle className={iconClass} aria-hidden="true" />;
+    case "green":
+      return <CheckCircle className={iconClass} aria-hidden="true" />;
+  }
+}
+
 export function TrafficLight({
   level,
   score,
@@ -60,22 +74,21 @@ export function TrafficLight({
           ${GLOW_CLASSES[level]}
           rounded-full
           flex items-center justify-center
-          text-3xl
           transition-all duration-500
         `}
         role="img"
         aria-label={`Ampel: ${LABEL_MAP[level]}`}
       >
-        <span className="text-5xl">{EMOJI_MAP[level]}</span>
+        <UrgencyIcon level={level} size={size} />
       </div>
 
       {/* Label and score */}
       <div className="text-center">
-        <p className="text-xl font-bold text-white">
+        <p className="text-xl font-bold text-text-primary">
           Ampel: {LABEL_MAP[level]}
         </p>
         {score !== undefined && (
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-text-secondary">
             Dringlichkeitswert: {score}/100
           </p>
         )}
@@ -83,7 +96,7 @@ export function TrafficLight({
 
       {/* Description */}
       {showDescription && (
-        <p className="text-center text-gray-300 max-w-md">
+        <p className="text-center text-text-secondary max-w-md">
           {URGENCY_DESCRIPTIONS[level]}
         </p>
       )}

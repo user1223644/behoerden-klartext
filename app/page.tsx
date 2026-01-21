@@ -4,7 +4,7 @@
  * Main application page for Behörden-Klartext.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, ReactNode } from "react";
 import { useOCR } from "@/hooks/useOCR";
 import { usePDF } from "@/hooks/usePDF";
 import { useScoring } from "@/hooks/useScoring";
@@ -15,6 +15,15 @@ import { AnalysisResultDisplay } from "@/components/AnalysisResult";
 import { AnalysisResult } from "@/types";
 import { isPDF } from "@/lib/pdf/extractor";
 import { validateLetter } from "@/lib/validation";
+import { 
+  Upload, 
+  Camera, 
+  FileText, 
+  AlertTriangle, 
+  Lock, 
+  TrafficCone, 
+  ClipboardList 
+} from "@/components/icons";
 
 type InputMode = "upload" | "camera" | "text";
 
@@ -124,7 +133,7 @@ export default function Home() {
             setInputMode("upload");
             setValidationError(null);
           }}
-          icon="📄"
+          icon={<Upload className="w-4 h-4" aria-hidden="true" />}
           label="Datei hochladen"
         />
         <TabButton
@@ -133,7 +142,7 @@ export default function Home() {
             setInputMode("camera");
             setValidationError(null);
           }}
-          icon="📷"
+          icon={<Camera className="w-4 h-4" aria-hidden="true" />}
           label="Foto aufnehmen"
         />
         <TabButton
@@ -142,7 +151,7 @@ export default function Home() {
             setInputMode("text");
             setValidationError(null);
           }}
-          icon="✏️"
+          icon={<FileText className="w-4 h-4" aria-hidden="true" />}
           label="Text eingeben"
         />
       </div>
@@ -182,7 +191,7 @@ export default function Home() {
       {/* Error display */}
       {(processingError || validationError) && (
         <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-2">
-          <span className="text-xl">⚠️</span>
+          <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
           <span className="font-medium">{processingError || validationError}</span>
         </div>
       )}
@@ -190,17 +199,17 @@ export default function Home() {
       {/* Feature highlights */}
       <div className="mt-12 grid gap-4 md:grid-cols-3">
         <FeatureCard
-          icon="🔒"
+          icon={<Lock className="w-6 h-6 text-primary-orange" aria-hidden="true" />}
           title="100% Lokal"
           description="Alle Daten bleiben in Ihrem Browser"
         />
         <FeatureCard
-          icon="🚦"
+          icon={<TrafficCone className="w-6 h-6 text-primary-orange" aria-hidden="true" />}
           title="Ampelsystem"
           description="Sofort die Dringlichkeit erkennen"
         />
         <FeatureCard
-          icon="📋"
+          icon={<ClipboardList className="w-6 h-6 text-primary-orange" aria-hidden="true" />}
           title="Daten-Extraktion"
           description="Beträge, Fristen und Aktenzeichen"
         />
@@ -227,7 +236,7 @@ function Header() {
 interface TabButtonProps {
   active: boolean;
   onClick: () => void;
-  icon: string;
+  icon: ReactNode;
   label: string;
 }
 
@@ -238,6 +247,7 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
       className={`
         flex-1 py-2 px-3 rounded-lg font-medium text-sm
         transition-all duration-300
+        flex items-center justify-center gap-2
         ${
           active
             ? "bg-bg-primary text-primary-orange shadow-sm border border-border-color"
@@ -245,14 +255,14 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
         }
       `}
     >
-      <span className="mr-2">{icon}</span>
+      {icon}
       <span className="hidden sm:inline">{label}</span>
     </button>
   );
 }
 
 interface FeatureCardProps {
-  icon: string;
+  icon: ReactNode;
   title: string;
   description: string;
 }
@@ -260,7 +270,11 @@ interface FeatureCardProps {
 function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
     <div className="p-6 bg-bg-secondary rounded-xl text-center border border-border-color hover:border-primary-orange/30 transition-colors shadow-sm">
-      <div className="text-4xl mb-4">{icon}</div>
+      <div className="flex justify-center mb-4">
+        <span className="w-12 h-12 rounded-full bg-primary-orange/10 flex items-center justify-center">
+          {icon}
+        </span>
+      </div>
       <h3 className="font-bold text-text-primary mb-2">{title}</h3>
       <p className="text-sm text-text-secondary">{description}</p>
     </div>
@@ -269,11 +283,26 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
 
 function Footer() {
   return (
-    <footer className="mt-16 text-center text-sm text-text-secondary border-t border-border-color pt-8">
-      <p className="max-w-md mx-auto">
+    <footer className="mt-16 border-t border-border-color pt-8 pb-4">
+      <p className="max-w-md mx-auto text-center text-sm text-text-secondary mb-8">
         Keine Rechtsberatung. Bei wichtigen Entscheidungen konsultieren Sie einen
         Rechtsanwalt.
       </p>
+      
+      <div className="flex flex-col md:flex-row justify-between items-center text-sm font-medium opacity-80 gap-4">
+        <p className="text-text-secondary">
+          © {new Date().getFullYear()} <span className="text-primary-orange">mario nguyen</span>
+        </p>
+        
+        <a 
+          href="https://github.com/user1223644" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-text-secondary hover:text-primary-orange transition-colors flex items-center gap-2"
+        >
+          github.com/user1223644
+        </a>
+      </div>
     </footer>
   );
 }

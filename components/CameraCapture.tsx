@@ -5,6 +5,7 @@
  */
 
 import { useCamera } from "@/hooks/useCamera";
+import { Camera, X } from "@/components/icons";
 
 interface CameraCaptureProps {
   onCapture: (image: Blob) => void;
@@ -53,7 +54,7 @@ export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProp
           ${disabled ? "opacity-50 cursor-not-allowed" : ""}
         `}
       >
-        <span className="text-2xl">📷</span>
+        <Camera className="w-6 h-6" aria-hidden="true" />
         Kamera öffnen
       </button>
     );
@@ -88,7 +89,7 @@ export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProp
             className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-colors backdrop-blur-sm"
             aria-label="Kamera schließen"
           >
-            ✕
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
       </div>
