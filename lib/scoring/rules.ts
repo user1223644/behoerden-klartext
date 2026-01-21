@@ -44,14 +44,40 @@ export const CATEGORY_RECOMMENDATIONS: Record<LetterCategory, string[]> = {
   ],
 };
 
+/**
+ * Helper to get the correct indefinite article (ein/eine) for a category.
+ */
+function getArticle(category: LetterCategory): string {
+  switch (category) {
+    case "final_notice":
+    case "payment_reminder":
+    case "enforcement": // In case we ever map to "Vollstreckung" (f), but currently "Vollstreckungsbescheid" (m)
+      // Actually, let's just check the label gender.
+      // Vollstreckungsbescheid (m) -> ein
+      // Letzte Mahnung (f) -> eine
+      // Zahlungserinnerung (f) -> eine
+      // Informationsschreiben (n) -> ein
+      if (category === "final_notice" || category === "payment_reminder") return "eine";
+      return "ein";
+    default:
+      return "ein";
+  }
+}
+
 /** Summary templates per urgency level */
-export const SUMMARY_TEMPLATES: Record<UrgencyLevel, (category: string) => string> = {
-  red: (category) =>
-    `Dies ist ein ${category} mit höchster Dringlichkeit. Es drohen unmittelbare rechtliche Konsequenzen wie Pfändung oder Zwangsvollstreckung.`,
-  yellow: (category) =>
-    `Dies ist ein ${category}. Sie sollten innerhalb der angegebenen Frist reagieren, um weitere Kosten oder rechtliche Schritte zu vermeiden.`,
-  green: (category) =>
-    `Dies ist ein ${category}. Es handelt sich um eine Information - keine dringende Reaktion erforderlich.`,
+export const SUMMARY_TEMPLATES: Record<UrgencyLevel, (category: LetterCategory, label: string) => string> = {
+  red: (category, label) =>
+    category === "unknown"
+      ? "Der Inhalt dieses Schreibens konnte nicht automatisch klassifiziert werden, die Dringlichkeit wird jedoch als KRITISCH eingestuft."
+      : `Dies ist ${getArticle(category)} ${label} mit höchster Dringlichkeit. Es drohen unmittelbare rechtliche Konsequenzen wie Pfändung oder Zwangsvollstreckung.`,
+  yellow: (category, label) =>
+    category === "unknown"
+      ? "Der Inhalt dieses Schreibens konnte nicht automatisch klassifiziert werden. Bitte prüfen Sie es manuell auf Fristen."
+      : `Dies ist ${getArticle(category)} ${label}. Sie sollten innerhalb der angegebenen Frist reagieren, um weitere Kosten oder rechtliche Schritte zu vermeiden.`,
+  green: (category, label) =>
+    category === "unknown"
+      ? "Der Inhalt dieses Schreibens konnte nicht automatisch klassifiziert werden. Es scheint sich jedoch um eine Information ohne sofortigen Handlungsbedarf zu handeln."
+      : `Dies ist ${getArticle(category)} ${label}. Es handelt sich um eine Information - keine dringende Reaktion erforderlich.`,
 };
 
 /**

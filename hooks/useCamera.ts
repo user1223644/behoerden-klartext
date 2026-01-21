@@ -30,34 +30,61 @@ export function useCamera(): UseCameraReturn {
     try {
       setState((prev) => ({ ...prev, error: null }));
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment", // Prefer back camera on mobile
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-      });
+      let stream: MediaStream | null = null;
+      let error: unknown = null;
+
+      // Strategy 1: Try environment camera (back camera)
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        });
+      } catch (e) {
+        console.log("Environment camera failed, trying fallback...", e);
+        error = e;
+      }
+
+      // Strategy 2: If failed, try any camera without specific facing mode
+      if (!stream) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          }); // Fallback to basic constraints
+          error = null;
+        } catch (e) {
+          console.error("Fallback camera failed:", e);
+          error = e;
+        }
+      }
+
+      if (!stream) {
+        throw error || new Error("Keine Kamera gefunden");
+      }
 
       streamRef.current = stream;
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-
+      // Update state to trigger re-render and mount video element
       setState({
         isActive: true,
         hasPermission: true,
         error: null,
       });
     } catch (error) {
+      console.error("Camera start failed:", error);
       let errorMessage = "Kamera konnte nicht gestartet werden";
 
       if (error instanceof DOMException) {
-        if (error.name === "NotAllowedError") {
+        if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
           errorMessage = "Kamerazugriff wurde verweigert";
         } else if (error.name === "NotFoundError") {
           errorMessage = "Keine Kamera gefunden";
+        } else if (error.name === "NotReadableError") {
+          errorMessage = "Kamera wird bereits verwendet";
+        } else if (error.name === "OverconstrainedError") {
+          errorMessage = "Kamera-Einstellungen nicht unterstützt"; // Should be caught by fallback
         }
       }
 
@@ -91,6 +118,12 @@ export function useCamera(): UseCameraReturn {
     }
 
     const video = videoRef.current;
+    
+    // Ensure we have dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      return null;
+    }
+
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -100,19 +133,7 @@ export function useCamera(): UseCameraReturn {
 
     ctx.drawImage(video, 0, 0);
 
-    // Convert to blob synchronously isn't possible, so we return null
-    // The actual implementation uses toDataURL
-    let result: Blob | null = null;
-
-    canvas.toBlob(
-      (blob) => {
-        result = blob;
-      },
-      "image/jpeg",
-      0.9
-    );
-
-    // Return data URL converted to blob for immediate use
+    // Convert canvas to blob via data URL (synchronous-like behavior for hook return)
     const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
     const base64 = dataUrl.split(",")[1];
     const bytes = atob(base64);
@@ -124,6 +145,18 @@ export function useCamera(): UseCameraReturn {
 
     return new Blob([arr], { type: "image/jpeg" });
   }, [state.isActive]);
+
+  // Effect to attach stream to video element when active
+  useEffect(() => {
+    if (state.isActive && videoRef.current && streamRef.current) {
+      const video = videoRef.current;
+      video.srcObject = streamRef.current;
+      
+      video.play().catch((e) => {
+        console.error("Video auto-play failed:", e);
+      });
+    }
+  }, [state.isActive]); // Depend on isActive state change
 
   // Cleanup on unmount
   useEffect(() => {

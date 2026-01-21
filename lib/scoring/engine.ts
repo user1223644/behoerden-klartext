@@ -143,7 +143,7 @@ export function analyzeText(
   const categoryLabel = CATEGORY_LABELS[category];
 
   // Generate summary
-  const summary = SUMMARY_TEMPLATES[urgency](categoryLabel);
+  const summary = SUMMARY_TEMPLATES[urgency](category, categoryLabel);
 
   // Get recommendations for this category
   const recommendations = CATEGORY_RECOMMENDATIONS[category];
