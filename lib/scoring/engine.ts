@@ -1,5 +1,14 @@
 /**
  * Main scoring engine for letter analysis.
+ * 
+ * This engine now uses CONTEXT-AWARE keyword evaluation to prevent
+ * false RED alerts when urgent keywords appear in negated/cancelled contexts.
+ * 
+ * Key changes from simple keyword matching:
+ * 1. Text is split into sentences for independent evaluation
+ * 2. Each keyword is checked for nearby negation patterns
+ * 3. Cancelled/revoked actions are properly ignored
+ * 4. Only non-neutralized keywords contribute to the final score
  */
 
 import { LetterCategory, KeywordMatch, ScoringResult, ExtractedData, UrgencyLevel } from "@/types";
@@ -9,6 +18,7 @@ import {
   RED_KEYWORDS,
   YELLOW_KEYWORDS,
   GREEN_KEYWORDS,
+  KeywordDefinition,
 } from "./keywords";
 import {
   getUrgencyFromScore,
@@ -16,27 +26,60 @@ import {
   CATEGORY_RECOMMENDATIONS,
   SUMMARY_TEMPLATES,
 } from "./rules";
+import {
+  splitIntoSentences,
+  evaluateKeywordInContext,
+  evaluateBetreffKeywordWithBodyContext,
+  EvaluatedKeyword,
+} from "./context";
+
+// ============================================================================
+// EXTENDED KEYWORD MATCH (includes context evaluation results)
+// ============================================================================
+
+interface ExtendedKeywordMatch extends KeywordMatch {
+  originalWeight: number;
+  effectiveWeight: number;
+  isNeutralized: boolean;
+  reason: string;
+}
+
+// ============================================================================
+// SENTENCE-LEVEL KEYWORD DETECTION
+// ============================================================================
 
 /**
- * Find all keyword matches in the text.
+ * Find all keyword matches in a single sentence and evaluate their context.
+ * 
+ * This function:
+ * 1. Finds all keywords present in the sentence
+ * 2. Evaluates each keyword's context for negation/mitigation
+ * 3. Returns evaluated keywords with effective weights
  */
-function findKeywordMatches(text: string): KeywordMatch[] {
-  const normalizedText = text.toLowerCase();
-  const matches: KeywordMatch[] = [];
+function findKeywordMatchesInSentence(sentence: string): ExtendedKeywordMatch[] {
+  const normalizedSentence = sentence.toLowerCase();
+  const matches: ExtendedKeywordMatch[] = [];
 
   for (const def of ALL_KEYWORDS) {
-    const index = normalizedText.indexOf(def.keyword);
+    const index = normalizedSentence.indexOf(def.keyword);
     if (index !== -1) {
-      // Extract context (surrounding text)
-      const start = Math.max(0, index - 30);
-      const end = Math.min(normalizedText.length, index + def.keyword.length + 30);
-      const context = text.substring(start, end).trim();
+      // Evaluate this keyword in its sentence context
+      const evaluated = evaluateKeywordInContext(
+        sentence,
+        def.keyword,
+        def.category,
+        def.weight
+      );
 
       matches.push({
         keyword: def.keyword,
         category: def.category,
-        weight: def.weight,
-        context: `...${context}...`,
+        weight: evaluated.effectiveWeight, // Use effective weight, not original
+        context: evaluated.context,
+        originalWeight: evaluated.originalWeight,
+        effectiveWeight: evaluated.effectiveWeight,
+        isNeutralized: evaluated.isNeutralized,
+        reason: evaluated.reason,
       });
     }
   }
@@ -45,12 +88,127 @@ function findKeywordMatches(text: string): KeywordMatch[] {
 }
 
 /**
- * Determine the primary category from matches.
+ * Detect if a text contains a Betreff line and extract it with the body.
+ * Returns null if no Betreff is found.
  */
-function determinePrimaryCategory(matches: KeywordMatch[]): LetterCategory {
-  if (matches.length === 0) return "unknown";
+function extractBetreffAndBody(text: string): { betreff: string; body: string } | null {
+  // Common Betreff patterns in German official letters
+  const betreffPatterns = [
+    /Betreff:?\s*(.+?)(?:\n|$)/i,
+    /Betr\.:?\s*(.+?)(?:\n|$)/i,
+    /Bezug:?\s*(.+?)(?:\n|$)/i,
+  ];
 
-  // Create category scores
+  for (const pattern of betreffPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const betreffLine = match[1].trim();
+      // Remove the Betreff line from the text to get the body
+      const body = text.replace(match[0], '').trim();
+      return { betreff: betreffLine, body };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Find keywords in a Betreff line and evaluate them against body context.
+ */
+function findBetreffKeywordMatches(
+  betreffLine: string,
+  bodyText: string
+): ExtendedKeywordMatch[] {
+  const normalizedBetreff = betreffLine.toLowerCase();
+  const matches: ExtendedKeywordMatch[] = [];
+
+  for (const def of ALL_KEYWORDS) {
+    const index = normalizedBetreff.indexOf(def.keyword);
+    if (index !== -1) {
+      // Use special Betreff evaluation that considers full body context
+      const evaluated = evaluateBetreffKeywordWithBodyContext(
+        def.keyword,
+        def.category,
+        def.weight,
+        betreffLine,
+        bodyText
+      );
+
+      matches.push({
+        keyword: def.keyword,
+        category: def.category,
+        weight: evaluated.effectiveWeight,
+        context: evaluated.context,
+        originalWeight: evaluated.originalWeight,
+        effectiveWeight: evaluated.effectiveWeight,
+        isNeutralized: evaluated.isNeutralized,
+        reason: evaluated.reason,
+      });
+    }
+  }
+
+  return matches;
+}
+
+/**
+ * Find all keyword matches across the entire text, sentence by sentence.
+ * This is the main entry point for context-aware keyword detection.
+ * 
+ * Special handling for Betreff (subject) lines:
+ * - Keywords in Betreff are evaluated against the FULL body context
+ * - Body negations can neutralize Betreff keywords
+ * - Exclusion patterns in body reduce Betreff keyword weights
+ */
+function findKeywordMatchesWithContext(text: string): ExtendedKeywordMatch[] {
+  const allMatches: ExtendedKeywordMatch[] = [];
+  
+  // Check for Betreff line and handle specially
+  const betreffExtraction = extractBetreffAndBody(text);
+  
+  if (betreffExtraction) {
+    // Process Betreff keywords with body context
+    const betreffMatches = findBetreffKeywordMatches(
+      betreffExtraction.betreff,
+      betreffExtraction.body
+    );
+    allMatches.push(...betreffMatches);
+    
+    // Process body sentences normally
+    const bodySentences = splitIntoSentences(betreffExtraction.body);
+    for (const sentence of bodySentences) {
+      const sentenceMatches = findKeywordMatchesInSentence(sentence);
+      allMatches.push(...sentenceMatches);
+    }
+  } else {
+    // No Betreff found - process entire text sentence by sentence
+    const sentences = splitIntoSentences(text);
+    for (const sentence of sentences) {
+      const sentenceMatches = findKeywordMatchesInSentence(sentence);
+      allMatches.push(...sentenceMatches);
+    }
+  }
+
+  return allMatches;
+}
+
+// ============================================================================
+// CATEGORY DETERMINATION
+// ============================================================================
+
+/**
+ * Determine the primary category from matches.
+ * Only considers NON-NEUTRALIZED keywords.
+ */
+function determinePrimaryCategory(matches: ExtendedKeywordMatch[]): LetterCategory {
+  // Filter to only active (non-neutralized) matches
+  const activeMatches = matches.filter(m => !m.isNeutralized);
+  
+  if (activeMatches.length === 0) {
+    // All keywords were negated - this is likely an informational letter
+    return "informational";
+  }
+
+  // Create category scores from EFFECTIVE weights (not original)
   const categoryScores: Record<LetterCategory, number> = {
     enforcement: 0,
     final_notice: 0,
@@ -59,8 +217,8 @@ function determinePrimaryCategory(matches: KeywordMatch[]): LetterCategory {
     unknown: 0,
   };
 
-  for (const match of matches) {
-    categoryScores[match.category] += match.weight;
+  for (const match of activeMatches) {
+    categoryScores[match.category] += match.effectiveWeight;
   }
 
   // Find highest scoring category
@@ -77,68 +235,90 @@ function determinePrimaryCategory(matches: KeywordMatch[]): LetterCategory {
   return primaryCategory;
 }
 
+// ============================================================================
+// SCORE CALCULATION
+// ============================================================================
+
 /**
- * Calculate score based on highest keyword weight per urgency level.
- * This approach uses urgency levels: Red > Yellow > Green
+ * Calculate score based on highest EFFECTIVE keyword weight per urgency level.
+ * 
+ * Key difference from simple scoring:
+ * - Only NON-NEUTRALIZED keywords contribute to the score
+ * - Effective weights (after context modifiers) are used
+ * - If all RED keywords are negated, the score drops to YELLOW or GREEN
  */
-function calculateScore(
-  matches: KeywordMatch[],
+function calculateScoreWithContext(
+  matches: ExtendedKeywordMatch[],
   deadlineDays?: number
 ): number {
-  if (matches.length === 0) return 0;
-
-  const lowerKeywords = matches.map((m) => m.keyword.toLowerCase());
-
-  // Check for RED keywords first (highest priority)
-  let maxRedWeight = 0;
-  for (const def of RED_KEYWORDS) {
-    if (lowerKeywords.includes(def.keyword)) {
-      maxRedWeight = Math.max(maxRedWeight, def.weight);
-    }
+  // Filter to only active matches
+  const activeMatches = matches.filter(m => !m.isNeutralized);
+  
+  if (activeMatches.length === 0) {
+    // All keywords were negated - return 0 (GREEN)
+    return 0;
   }
 
-  // If RED keyword found, use its weight as base score
-  if (maxRedWeight > 0) {
+  // Check for active RED keywords
+  const activeRedKeywords = activeMatches.filter(m => {
+    const originalDef = RED_KEYWORDS.find(k => k.keyword === m.keyword);
+    return originalDef !== undefined;
+  });
+
+  if (activeRedKeywords.length > 0) {
+    const maxRedWeight = Math.max(...activeRedKeywords.map(m => m.effectiveWeight));
     const multiplier = getDeadlineMultiplier(deadlineDays);
     return Math.min(100, Math.round(maxRedWeight * multiplier));
   }
 
-  // Check for YELLOW keywords
-  let maxYellowWeight = 0;
-  for (const def of YELLOW_KEYWORDS) {
-    if (lowerKeywords.includes(def.keyword)) {
-      maxYellowWeight = Math.max(maxYellowWeight, def.weight);
-    }
-  }
+  // Check for active YELLOW keywords
+  const activeYellowKeywords = activeMatches.filter(m => {
+    const originalDef = YELLOW_KEYWORDS.find(k => k.keyword === m.keyword);
+    return originalDef !== undefined;
+  });
 
-  // If YELLOW keyword found, use its weight as base score
-  if (maxYellowWeight > 0) {
+  if (activeYellowKeywords.length > 0) {
+    const maxYellowWeight = Math.max(...activeYellowKeywords.map(m => m.effectiveWeight));
     const multiplier = getDeadlineMultiplier(deadlineDays);
-    return Math.min(79, Math.round(maxYellowWeight * multiplier)); // Cap below red threshold
+    return Math.min(79, Math.round(maxYellowWeight * multiplier));
   }
 
-  // Check for GREEN keywords
-  let maxGreenWeight = 0;
-  for (const def of GREEN_KEYWORDS) {
-    if (lowerKeywords.includes(def.keyword)) {
-      maxGreenWeight = Math.max(maxGreenWeight, def.weight);
-    }
+  // Check for active GREEN keywords
+  const activeGreenKeywords = activeMatches.filter(m => {
+    const originalDef = GREEN_KEYWORDS.find(k => k.keyword === m.keyword);
+    return originalDef !== undefined;
+  });
+
+  if (activeGreenKeywords.length > 0) {
+    const maxGreenWeight = Math.max(...activeGreenKeywords.map(m => m.effectiveWeight));
+    return Math.min(39, maxGreenWeight);
   }
 
-  // GREEN keywords = low score
-  return Math.min(39, maxGreenWeight); // Cap below yellow threshold
+  return 0;
 }
+
+// ============================================================================
+// MAIN ANALYSIS FUNCTION
+// ============================================================================
 
 /**
  * Analyze text and return scoring result.
+ * This is the main entry point for the context-aware scoring engine.
  */
 export function analyzeText(
   text: string,
   extractedData: ExtractedData
 ): ScoringResult {
-  const matches = findKeywordMatches(text);
+  // Find all keywords with context-aware evaluation
+  const matches = findKeywordMatchesWithContext(text);
+  
+  // Determine category from active keywords only
   const category = determinePrimaryCategory(matches);
-  const score = calculateScore(matches, extractedData.deadlineDays);
+  
+  // Calculate score from active keywords only
+  const score = calculateScoreWithContext(matches, extractedData.deadlineDays);
+  
+  // Get urgency level from score
   const urgency = getUrgencyFromScore(score);
   const categoryLabel = CATEGORY_LABELS[category];
 
@@ -148,19 +328,41 @@ export function analyzeText(
   // Get recommendations for this category
   const recommendations = CATEGORY_RECOMMENDATIONS[category];
 
+  // Log neutralized keywords for debugging (can be removed in production)
+  const neutralizedCount = matches.filter(m => m.isNeutralized).length;
+  if (neutralizedCount > 0) {
+    console.log(`[Context-Aware Scoring] ${neutralizedCount} keyword(s) neutralized by context`);
+  }
+
+  // Convert extended matches back to standard KeywordMatch format for the result
+  const standardMatches: KeywordMatch[] = matches.map(m => ({
+    keyword: m.keyword,
+    category: m.category,
+    weight: m.effectiveWeight,
+    context: m.isNeutralized 
+      ? `${m.context} [${m.reason}]`  // Include neutralization reason in context
+      : m.context,
+  }));
+
   return {
     urgency,
     score,
     category,
     categoryLabel,
-    matches,
+    matches: standardMatches,
     summary,
     recommendations,
   };
 }
 
+// ============================================================================
+// QUICK CHECK UTILITY
+// ============================================================================
+
 /**
  * Quick check if text likely needs urgent attention.
+ * This is a fast pre-filter that does NOT apply context evaluation.
+ * Use analyzeText() for accurate scoring.
  */
 export function quickUrgencyCheck(text: string): boolean {
   const lowerText = text.toLowerCase();
@@ -174,3 +376,4 @@ export function quickUrgencyCheck(text: string): boolean {
 
   return urgentKeywords.some((kw) => lowerText.includes(kw));
 }
+
