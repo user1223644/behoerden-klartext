@@ -167,17 +167,15 @@ export function FileUpload({
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 py-8">
             <div className="flex justify-center">
-              <span className="w-16 h-16 rounded-full bg-primary-orange/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <Upload className="w-8 h-8 text-primary-orange" aria-hidden="true" />
-              </span>
+              <Upload className="w-8 h-8 text-primary-orange" aria-hidden="true" />
             </div>
-            <div>
-              <p className="text-xl font-bold text-text-primary">
+            <div className="text-center">
+              <p className="text-lg font-semibold text-text-primary">
                 Datei hier ablegen oder klicken
               </p>
-              <p className="text-sm text-text-secondary mt-3">
+              <p className="text-xs text-text-secondary mt-2 uppercase tracking-wider">
                 Unterstützt: JPG, PNG, WEBP, PDF
               </p>
             </div>

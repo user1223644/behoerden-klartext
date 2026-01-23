@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  inline?: boolean;
+}
+
+export function ThemeToggle({ inline = false }: ThemeToggleProps) {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
@@ -26,18 +30,22 @@ export function ThemeToggle() {
     document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
+  const baseClasses = inline
+    ? "p-1 rounded-full hover:bg-bg-secondary transition-all duration-300"
+    : "fixed top-4 right-4 z-50 p-2 rounded-full bg-bg-secondary border border-orange/20 dark:border-transparent hover:border-orange/50 dark:hover:border-transparent transition-all duration-300 shadow-lg group";
+
   return (
     <button
       onClick={toggleTheme}
-      className="fixed top-4 right-4 z-50 p-2 rounded-full bg-bg-secondary border border-orange/20 dark:border-transparent hover:border-orange/50 dark:hover:border-transparent transition-all duration-300 shadow-lg group"
+      className={baseClasses}
       aria-label="Toggle Theme"
     >
-      <div className="relative w-6 h-6 flex items-center justify-center">
+      <div className="relative w-5 h-5 flex items-center justify-center">
         {/* Sun Icon */}
         <svg
-          className={`absolute transition-all duration-500 transform ${
+          className={`absolute w-5 h-5 transition-all duration-500 transform ${
             theme === "dark" ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-          } text-orange`}
+          } text-text-secondary hover:text-text-primary`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -51,9 +59,9 @@ export function ThemeToggle() {
         </svg>
         {/* Moon Icon */}
         <svg
-          className={`absolute transition-all duration-500 transform ${
+          className={`absolute w-5 h-5 transition-all duration-500 transform ${
             theme === "light" ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-          } text-orange`}
+          } text-text-secondary hover:text-text-primary`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
