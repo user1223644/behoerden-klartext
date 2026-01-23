@@ -158,11 +158,26 @@ export function useCamera(): UseCameraReturn {
     }
   }, [state.isActive]); // Depend on isActive state change
 
-  // Cleanup on unmount
+  // Cleanup on unmount - ensure camera is always stopped
   useEffect(() => {
+    // Store ref value at effect creation time for cleanup
+    const currentStreamRef = streamRef;
+    const currentVideoRef = videoRef;
+
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
+      // Stop all tracks when component unmounts
+      if (currentStreamRef.current) {
+        console.log("[useCamera] Cleanup: Stopping camera tracks");
+        currentStreamRef.current.getTracks().forEach((track) => {
+          track.stop();
+          console.log(`[useCamera] Stopped track: ${track.kind}`);
+        });
+        currentStreamRef.current = null;
+      }
+      
+      // Also clear video source
+      if (currentVideoRef.current) {
+        currentVideoRef.current.srcObject = null;
       }
     };
   }, []);

@@ -4,6 +4,7 @@
  * Camera capture component for mobile devices.
  */
 
+import { useEffect } from "react";
 import { useCamera } from "@/hooks/useCamera";
 import { Camera, X } from "@/components/icons";
 
@@ -14,6 +15,14 @@ interface CameraCaptureProps {
 
 export function CameraCapture({ onCapture, disabled = false }: CameraCaptureProps) {
   const { state, videoRef, startCamera, stopCamera, captureImage } = useCamera();
+
+  // Ensure camera is stopped when component unmounts (e.g., when switching tabs)
+  useEffect(() => {
+    return () => {
+      console.log("[CameraCapture] Component unmounting, stopping camera");
+      stopCamera();
+    };
+  }, [stopCamera]);
 
   const handleCapture = () => {
     const blob = captureImage();

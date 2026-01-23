@@ -13,6 +13,9 @@ import { CameraCapture } from "@/components/CameraCapture";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { AnalysisResultDisplay } from "@/components/AnalysisResult";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TextPreview } from "@/components/TextPreview";
+import { HighlightControls } from "@/components/HighlightControls";
+import { DisclaimerModal, useDisclaimer } from "@/components/DisclaimerModal";
 import { AnalysisResult } from "@/types";
 import { isPDF } from "@/lib/pdf/extractor";
 import { validateLetter } from "@/lib/validation";
@@ -25,6 +28,14 @@ export default function Home() {
   const [textInput, setTextInput] = useState("");
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  
+  // Disclaimer modal state
+  const { hasAccepted, acceptDisclaimer, isLoading: isDisclaimerLoading } = useDisclaimer();
+  
+  // Preview state - shows highlighted text before final analysis
+  const [previewText, setPreviewText] = useState<string | null>(null);
+  const [showNeutralized, setShowNeutralized] = useState(true);
+  const [showGreen, setShowGreen] = useState(true);
 
   const { state: ocrState, processImage, reset: resetOCR } = useOCR();
   const { state: pdfState, extractText: extractPDFText, reset: resetPDF } = usePDF();
@@ -59,8 +70,8 @@ export default function Home() {
           return;
         }
 
-        const result = analyze(validation.text);
-        setAnalysisResult(result);
+        // Show preview first instead of direct analysis
+        setPreviewText(validation.text);
       } catch (error) {
         console.error("Analysis failed:", error);
       }
@@ -78,18 +89,49 @@ export default function Home() {
       return;
     }
 
-    const result = analyze(validation.text);
-    setAnalysisResult(result);
+    // Show preview first instead of direct analysis
+    setPreviewText(validation.text);
   }, [textInput, analyze]);
 
   const handleReset = useCallback(() => {
     setAnalysisResult(null);
+    setPreviewText(null);
     setValidationError(null);
     setTextInput("");
     resetOCR();
     resetPDF();
     resetScoring();
   }, [resetOCR, resetPDF, resetScoring]);
+
+  // Handle proceeding from preview to analysis
+  const handleProceedToAnalysis = useCallback(() => {
+    if (!previewText) return;
+    const result = analyze(previewText);
+    setAnalysisResult(result);
+  }, [previewText, analyze]);
+
+  // Handle going back from preview to input
+  const handleBackToInput = useCallback(() => {
+    setPreviewText(null);
+  }, []);
+
+  // Show loading state while checking disclaimer status
+  if (isDisclaimerLoading) {
+    return (
+      <div className="bg-bg-primary min-h-screen flex items-center justify-center">
+        <div className="text-text-secondary">Laden...</div>
+      </div>
+    );
+  }
+
+  // Show disclaimer modal on first visit
+  if (!hasAccepted) {
+    return (
+      <div className="bg-bg-primary min-h-screen">
+        <DisclaimerModal onAccept={acceptDisclaimer} />
+      </div>
+    );
+  }
 
   // Show results if analysis is complete
   if (analysisResult) {
@@ -98,6 +140,51 @@ export default function Home() {
         <Navbar />
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           <AnalysisResultDisplay result={analysisResult} onReset={handleReset} />
+        </div>
+      </div>
+    );
+  }
+
+  // Show preview with highlighted keywords
+  if (previewText) {
+    return (
+      <div className="bg-bg-primary text-text-primary transition-colors duration-300 min-h-screen">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          {/* Header */}
+          <div className="mb-6">
+            <button
+              onClick={handleBackToInput}
+              className="text-sm text-text-secondary hover:text-primary-orange transition-colors flex items-center gap-1 mb-4"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Zurück
+            </button>
+            <h2 className="text-2xl font-bold text-text-primary mb-2">Vorschau mit Markierungen</h2>
+            <p className="text-text-secondary text-sm">
+              Überprüfen Sie die erkannten Schlüsselwörter. Klicken Sie auf markierte Begriffe für Details.
+            </p>
+          </div>
+
+          {/* Highlight controls */}
+          <div className="mb-4">
+            <HighlightControls
+              showNeutralized={showNeutralized}
+              showGreen={showGreen}
+              onToggleNeutralized={setShowNeutralized}
+              onToggleGreen={setShowGreen}
+            />
+          </div>
+
+          {/* Text preview with highlights */}
+          <TextPreview
+            text={previewText}
+            showNeutralized={showNeutralized}
+            showGreen={showGreen}
+            onAnalyze={handleProceedToAnalysis}
+          />
         </div>
       </div>
     );
