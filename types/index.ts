@@ -64,3 +64,34 @@ export interface CameraState {
   hasPermission: boolean | null;
   error: string | null;
 }
+
+// ============================================================================
+// HISTORY TYPES
+// ============================================================================
+
+/** Source of input for analysis */
+export type InputSource = "pdf" | "camera" | "text";
+
+/** Individual rule match stored in history (optimized for storage) */
+export interface HistoryRuleMatch {
+  keyword: string;
+  weight: number;
+  effectiveWeight: number;
+  isNeutralized: boolean;
+  reason: string;
+}
+
+/** Single history entry */
+export interface HistoryEntry {
+  id: string;                    // Unique ID (timestamp-based)
+  timestamp: number;             // Unix timestamp
+  inputSource: InputSource;
+  urgency: UrgencyLevel;
+  score: number;
+  category: LetterCategory;
+  categoryLabel: string;
+  preview: string;               // First ~100 chars of text
+  summary: string;               // Generated summary text
+  matches: HistoryRuleMatch[];   // All matched rules with details
+  recommendations: string[];
+}

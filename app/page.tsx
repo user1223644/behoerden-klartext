@@ -5,9 +5,11 @@
  */
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { useOCR } from "@/hooks/useOCR";
 import { usePDF } from "@/hooks/usePDF";
 import { useScoring } from "@/hooks/useScoring";
+import { useHistory } from "@/hooks/useHistory";
 import { FileUpload } from "@/components/FileUpload";
 import { CameraCapture } from "@/components/CameraCapture";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -16,7 +18,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { TextPreview } from "@/components/TextPreview";
 import { HighlightControls } from "@/components/HighlightControls";
 import { DisclaimerModal, useDisclaimer } from "@/components/DisclaimerModal";
-import { AnalysisResult } from "@/types";
+import { Sidebar } from "@/components/Sidebar";
+import { AnalysisResult, InputSource } from "@/types";
 import { isPDF } from "@/lib/pdf/extractor";
 import { validateLetter } from "@/lib/validation";
 import { AlertTriangle } from "@/components/icons";
@@ -40,6 +43,10 @@ export default function Home() {
   const { state: ocrState, processImage, reset: resetOCR } = useOCR();
   const { state: pdfState, extractText: extractPDFText, reset: resetPDF } = usePDF();
   const { analyze, reset: resetScoring } = useScoring();
+  const { addEntry } = useHistory();
+
+  // Track input source for history
+  const [currentInputSource, setCurrentInputSource] = useState<InputSource>("text");
 
   // Determine if we're processing (OCR or PDF)
   const isProcessing = ocrState.isProcessing || pdfState.isProcessing;
@@ -58,9 +65,11 @@ export default function Home() {
 
         if (isFilePDF) {
           // Use PDF extractor for PDFs
+          setCurrentInputSource("pdf");
           text = await extractPDFText(file);
         } else {
           // Use OCR for images (including camera captures)
+          setCurrentInputSource("camera");
           text = await processImage(file);
         }
 
@@ -90,6 +99,7 @@ export default function Home() {
     }
 
     // Show preview first instead of direct analysis
+    setCurrentInputSource("text");
     setPreviewText(validation.text);
   }, [textInput, analyze]);
 
@@ -108,7 +118,10 @@ export default function Home() {
     if (!previewText) return;
     const result = analyze(previewText);
     setAnalysisResult(result);
-  }, [previewText, analyze]);
+    
+    // Save to history
+    addEntry(result, currentInputSource);
+  }, [previewText, analyze, addEntry, currentInputSource]);
 
   // Handle going back from preview to input
   const handleBackToInput = useCallback(() => {
@@ -213,73 +226,82 @@ export default function Home() {
         {/* Header */}
         <Header />
 
-        {/* Input mode tabs */}
-        <div className="flex gap-6 mb-8 border-b border-border-color">
-          <TabButton
-            active={inputMode === "upload"}
-            onClick={() => {
-              setInputMode("upload");
-              setValidationError(null);
-            }}
-            label="HOCHLADEN"
-          />
-          <TabButton
-            active={inputMode === "camera"}
-            onClick={() => {
-              setInputMode("camera");
-              setValidationError(null);
-            }}
-            label="KAMERA"
-          />
-          <TabButton
-            active={inputMode === "text"}
-            onClick={() => {
-              setInputMode("text");
-              setValidationError(null);
-            }}
-            label="TEXT"
-          />
-        </div>
-
-        {/* Input area */}
-        <div className={`bg-bg-secondary rounded-lg p-8 border-2 border-dashed transition-colors ${validationError ? 'border-red-500/50' : 'border-border-color'}`}>
-          {inputMode === "upload" && (
-            <FileUpload onFileSelect={handleFileAnalysis} />
-          )}
-
-          {inputMode === "camera" && (
-            <CameraCapture onCapture={handleFileAnalysis} />
-          )}
-
-          {inputMode === "text" && (
-            <div className="space-y-4">
-              <textarea
-                value={textInput}
-                onChange={(e) => {
-                  setTextInput(e.target.value);
-                  if (validationError) setValidationError(null);
+        {/* Main content with sidebar */}
+        <div className="flex gap-8">
+          {/* Left: Main content */}
+          <div className="flex-1 min-w-0">
+            {/* Input mode tabs */}
+            <div className="flex gap-6 mb-8 border-b border-border-color">
+              <TabButton
+                active={inputMode === "upload"}
+                onClick={() => {
+                  setInputMode("upload");
+                  setValidationError(null);
                 }}
-                placeholder="Fügen Sie hier den Text des Briefes ein..."
-                className={`w-full h-64 bg-bg-primary border rounded-lg p-4 text-text-primary placeholder-text-secondary/50 focus:ring-1 resize-none transition-all ${validationError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border-color focus:border-primary-orange focus:ring-primary-orange'}`}
+                label="HOCHLADEN"
               />
-              <button
-                onClick={handleTextAnalysis}
-                disabled={!textInput.trim()}
-                className="w-full py-3 bg-primary-orange hover:bg-primary-orange-dark disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium text-white transition-all"
-              >
-                Analysieren
-              </button>
+              <TabButton
+                active={inputMode === "camera"}
+                onClick={() => {
+                  setInputMode("camera");
+                  setValidationError(null);
+                }}
+                label="KAMERA"
+              />
+              <TabButton
+                active={inputMode === "text"}
+                onClick={() => {
+                  setInputMode("text");
+                  setValidationError(null);
+                }}
+                label="TEXT"
+              />
             </div>
-          )}
-        </div>
 
-        {/* Error display */}
-        {(processingError || validationError) && (
-          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg flex items-center gap-3 text-red-600 dark:text-red-400">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span className="font-medium">{processingError || validationError}</span>
+            {/* Input area */}
+            <div className={`bg-bg-secondary rounded-lg p-8 border-2 border-dashed transition-colors ${validationError ? 'border-red-500/50' : 'border-border-color'}`}>
+              {inputMode === "upload" && (
+                <FileUpload onFileSelect={handleFileAnalysis} />
+              )}
+
+              {inputMode === "camera" && (
+                <CameraCapture onCapture={handleFileAnalysis} />
+              )}
+
+              {inputMode === "text" && (
+                <div className="space-y-4">
+                  <textarea
+                    value={textInput}
+                    onChange={(e) => {
+                      setTextInput(e.target.value);
+                      if (validationError) setValidationError(null);
+                    }}
+                    placeholder="Fügen Sie hier den Text des Briefes ein..."
+                    className={`w-full h-64 bg-bg-primary border rounded-lg p-4 text-text-primary placeholder-text-secondary/50 focus:ring-1 resize-none transition-all ${validationError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border-color focus:border-primary-orange focus:ring-primary-orange'}`}
+                  />
+                  <button
+                    onClick={handleTextAnalysis}
+                    disabled={!textInput.trim()}
+                    className="w-full py-3 bg-primary-orange hover:bg-primary-orange-dark disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium text-white transition-all"
+                  >
+                    Analysieren
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Error display */}
+            {(processingError || validationError) && (
+              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg flex items-center gap-3 text-red-600 dark:text-red-400">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                <span className="font-medium">{processingError || validationError}</span>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right: Sidebar */}
+          <Sidebar />
+        </div>
 
         <div className="mt-16 grid gap-8 md:grid-cols-3">
           <FeatureCard
@@ -317,7 +339,13 @@ function Navbar() {
           </div>
           
           {/* Right nav items */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/verlauf"
+              className="text-sm text-text-secondary hover:text-primary-orange transition-colors"
+            >
+              Verlauf
+            </Link>
             <ThemeToggle inline />
           </div>
         </div>
