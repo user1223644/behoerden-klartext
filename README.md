@@ -1,11 +1,34 @@
 # Behörden-Klartext
 
-Behörden-Klartext analysiert deutsche Behördenbriefe und klassifiziert sie nach Dringlichkeit. Alles läuft lokal im Browser, ohne dass Daten übertragen werden.
+**Behörden-Klartext** analysiert deutsche Behördenbriefe und klassifiziert sie nach Dringlichkeit.  
+Die Verarbeitung erfolgt vollständig lokal im Browser, sodass keine sensiblen Daten übertragen werden.
 
-## Technischer Überblick
+## Überblick
 
-- Keine KI: die Logik basiert auf einer **Regel-Maschine**, die Begriffe erkennt und Punkte vergibt. Hohe Scores → 🔴 Rot, mittlere → 🟡 Gelb, niedrige → 🟢 Grün  
-- Volle Kontrolle über die Daten, alles lokal im Browser  
-- Multi-Sprachen möglich; aktuell DE unterstützt  
+Viele behördliche Schreiben sind schwer verständlich oder zeitkritisch. Dieses Projekt hilft dabei, Briefe automatisch zu bewerten und visuell einzuordnen.
 
-> Alles passiert lokal im Browser – keine sensiblen Briefdaten werden extern verarbeitet.
+Die Einstufung erfolgt über eine regelbasierte Analyse (keine KI), die Schlüsselbegriffe erkennt und daraus einen Score berechnet.
+
+## Features
+
+- OCR-gestützte Verarbeitung von Behördenbriefen  
+- Automatische Dringlichkeitsklassifizierung  
+- Farbliche Bewertung (Rot / Gelb / Grün)  
+- 100 % lokale Verarbeitung im Browser  
+- Keine Datenübertragung an externe Server  
+- Erweiterbare Regel-Engine  
+- Mehrsprachigkeit vorbereitet (aktuell Deutsch)
+
+## Tech Stack
+
+- Next.js  
+- TypeScript  
+- Tailwind CSS  
+
+## Installation
+
+Repository klonen:
+
+```bash
+git clone https://github.com/user1223644/behoerden-klartext.git
+cd behoerden-klartext
