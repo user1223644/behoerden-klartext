@@ -71,7 +71,7 @@ export function Sidebar() {
                 {entries.map((entry) => (
                   <Link
                     key={entry.id}
-                    href="/verlauf"
+                    href="/history"
                     className="block w-full text-left p-2 rounded hover:bg-bg-primary transition-colors group"
                   >
                     <div className="flex items-center gap-2">
@@ -95,7 +95,7 @@ export function Sidebar() {
 
               {/* Link to full history */}
               <Link
-                href="/verlauf"
+                href="/history"
                 className="block text-xs text-primary-orange hover:text-primary-orange-dark transition-colors mt-3 pt-2 border-t border-border-color"
               >
                 Alle Einträge anzeigen →

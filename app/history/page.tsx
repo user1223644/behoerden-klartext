@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * History page - /verlauf
+ * History page - /history
  * Shows chronological list of past analyses with expandable details.
  */
 
@@ -9,8 +9,9 @@ import Link from "next/link";
 import { useHistory } from "@/hooks/useHistory";
 import { HistoryEntryCard } from "@/components/HistoryEntryCard";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ClipboardList } from "@/components/icons";
 
-export default function VerlaufPage() {
+export default function HistoryPage() {
   const { entries, isLoading, deleteEntry, clearAll } = useHistory();
 
   return (
@@ -58,7 +59,9 @@ export default function VerlaufPage() {
         {/* Empty state */}
         {!isLoading && entries.length === 0 && (
           <div className="text-center py-12 bg-bg-secondary rounded-lg border border-border-color">
-            <div className="text-4xl mb-4">📋</div>
+            <div className="mb-4 flex justify-center">
+              <ClipboardList className="w-10 h-10 text-primary-orange" aria-hidden="true" />
+            </div>
             <h2 className="text-lg font-medium text-text-primary mb-2">
               Noch keine Analysen
             </h2>

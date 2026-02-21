@@ -341,7 +341,7 @@ function Navbar() {
           {/* Right nav items */}
           <div className="flex items-center gap-4">
             <Link
-              href="/verlauf"
+              href="/history"
               className="text-sm text-text-secondary hover:text-primary-orange transition-colors"
             >
               Verlauf
